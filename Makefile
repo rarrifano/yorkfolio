@@ -5,6 +5,7 @@ HOST      ?= 0.0.0.0
 PORT      ?= 8000
 DATA      ?= $(CURDIR)/data
 VOLUME    ?= yorkfolio-data
+# IMAGE: localhost/... builds from source; a registry image (ghcr.io/rarrifano/yorkfolio:0.1) is pulled.
 IMAGE     ?= localhost/yorkfolio:latest
 CONTAINER ?= yorkfolio
 FILES     ?= *.xlsx
@@ -30,7 +31,7 @@ CLI    = $(RUN_PY) $(if $(LOGIN),--user $(LOGIN))
 
 .DEFAULT_GOAL := help
 .PHONY: help run test lint format check import market summary aporte ir backup user-add user-list user-passwd \
-	user-del build volume up down restart logs shell status volume-import volume-export service service-remove clean
+	user-del build image volume up down restart logs shell status volume-import volume-export service service-remove clean
 
 help: ## list the available targets
 	@awk 'BEGIN {FS = ":.*## "} /^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5)} \
@@ -88,13 +89,16 @@ user-del: ## delete an account (its database is moved to data/users/deleted/)
 	$(RUN_PY) user del $(LOGIN)
 
 ##@ Container (podman: data lives in the named volume VOLUME=yorkfolio-data)
-build: ## build the image
+build: ## build the image from source
 	$(PODMAN) build -t $(IMAGE) -f Containerfile .
+
+image: ## build IMAGE if it is a localhost/ tag, otherwise pull it from the registry
+	$(if $(filter localhost/%,$(IMAGE)),$(PODMAN) build -t $(IMAGE) -f Containerfile .,$(PODMAN) pull $(IMAGE))
 
 volume: ## create the data volume (no-op if it exists)
 	@$(PODMAN) volume exists $(VOLUME) || $(PODMAN) volume create $(VOLUME)
 
-up: build volume ## run the container in the background on port PORT
+up: image volume ## run the container in the background on port PORT
 	-@$(PODMAN) rm -f $(CONTAINER) >/dev/null 2>&1
 	$(PODMAN) run -d --name $(CONTAINER) -p $(PORT):8000 -v $(VOLUME):/data --restart=unless-stopped $(IMAGE)
 	@echo "YorkFolio: http://localhost:$(PORT)"
@@ -114,8 +118,8 @@ status: ## show the container and volume
 	$(PODMAN) ps -a --filter name=$(CONTAINER)
 	$(PODMAN) volume inspect $(VOLUME) --format '{{.Name}}: {{.Mountpoint}}'
 
-volume-import: build volume ## copy a local data dir (DATA=./data) into the volume; FORCE=1 to overwrite
-	-$(PODMAN) stop $(CONTAINER) >/dev/null 2>&1
+volume-import: image volume ## copy a local data dir (DATA=./data) into the volume; FORCE=1 to overwrite
+	@$(PODMAN) stop $(CONTAINER) >/dev/null 2>&1 || true
 	$(PODMAN) run --rm --user 0 -e FORCE=$(FORCE) -v $(DATA):/src:ro,z -v $(VOLUME):/data --entrypoint sh $(IMAGE) -c \
 	  'if [ -e /data/auth.db ] && [ -z "$$FORCE" ]; then echo "volume already has data (FORCE=1 to overwrite)"; exit 1; fi; \
 	   cp -a /src/. /data/ && chown -R 1000:1000 /data && echo "imported into $(VOLUME)"'
@@ -124,7 +128,7 @@ volume-import: build volume ## copy a local data dir (DATA=./data) into the volu
 volume-export: ## save the volume to a tarball in the current directory
 	$(PODMAN) volume export $(VOLUME) --output $(CURDIR)/$(VOLUME)-$$(date +%Y%m%d-%H%M%S).tar
 
-service: build ## run as a systemd user service (Quadlet), restarted on failure and at login
+service: image ## run as a systemd user service (Quadlet), restarted on failure and at login
 	@mkdir -p $(QUADLET)
 	-@$(PODMAN) rm -f $(CONTAINER) >/dev/null 2>&1
 	@printf '%s\n' '[Volume]' 'VolumeName=$(VOLUME)' > $(QUADLET)/$(VOLUME).volume

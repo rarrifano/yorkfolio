@@ -43,6 +43,7 @@ From a clone you can build it yourself, using the same volume:
 git clone https://github.com/rarrifano/yorkfolio.git && cd yorkfolio
 make up              # build the image, create the volume, run on http://localhost:8000
 make service         # or: keep it running as a systemd user service (Quadlet)
+make service IMAGE=ghcr.io/rarrifano/yorkfolio:0.1   # …using the published release instead of a local build
 make volume-export   # back up the volume to yorkfolio-data-<timestamp>.tar
 ```
 
