@@ -10,5 +10,5 @@ services:
       - "8000:8000"
     volumes:
       - ./data:/data:z          # your database lives in ./data on the host
-    userns_mode: keep-id        # rootless podman: files in ./data stay owned by you
+    userns_mode: keep-id:uid=1000,gid=1000  # your user = the image user: ./data stays writable and yours
     restart: unless-stopped

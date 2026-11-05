@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import mimetypes
 import signal
+import socket
 import sys
 import time
 import traceback
@@ -236,8 +238,6 @@ class Handler(BaseHTTPRequestHandler):
 
 def _lan_ip() -> str | None:
     """Best-effort LAN address (no packets are sent)."""
-    import socket
-
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("10.255.255.255", 1))
@@ -247,8 +247,24 @@ def _lan_ip() -> str | None:
 
 
 def make_server(host: str = "0.0.0.0", port: int = 8000) -> ThreadingHTTPServer:
+    """0.0.0.0 / '' / '::' listen on IPv4 *and* IPv6 (browsers and podman's port forwarding try
+    ::1 for `localhost`); falls back to IPv4 only where IPv6 is disabled."""
     auth.connect().close()  # create the auth schema early
-    return ThreadingHTTPServer((host, port), Handler)
+    if host in ("0.0.0.0", "", "::") and socket.has_ipv6:
+        try:
+            return _DualStackServer(("::", port), Handler)
+        except OSError:
+            pass
+    return ThreadingHTTPServer((host or "0.0.0.0", port), Handler)
+
+
+class _DualStackServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
+
+    def server_bind(self):
+        with contextlib.suppress(OSError, AttributeError):
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        super().server_bind()
 
 
 def serve(host: str = "0.0.0.0", port: int = 8000):

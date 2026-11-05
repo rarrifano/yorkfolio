@@ -16,6 +16,8 @@ ON_HOST   := $(if $(wildcard /run/.containerenv),$(if $(shell command -v distrob
 PODMAN    ?= $(if $(shell command -v podman 2>/dev/null),podman,$(ON_HOST) podman)
 SYSTEMCTL ?= $(ON_HOST) systemctl --user
 QUADLET   ?= $(HOME)/.config/containers/systemd/$(CONTAINER).container
+# Map your host user onto the image's user (uid 1000) so ./data stays writable whatever your UID is.
+USERNS    ?= keep-id:uid=1000,gid=1000
 
 # Linters: local binaries when installed; otherwise run them without installing anything.
 RUFF_VERSION  ?= 0.8.4
@@ -93,7 +95,7 @@ build: ## build the image
 up: build ## run the container in the background (data in ./data, port PORT)
 	@mkdir -p $(DATA)
 	-@$(PODMAN) rm -f $(CONTAINER) >/dev/null 2>&1
-	$(PODMAN) run -d --name $(CONTAINER) -p $(PORT):8000 -v $(DATA):/data:z --userns=keep-id \
+	$(PODMAN) run -d --name $(CONTAINER) -p $(PORT):8000 -v $(DATA):/data:z --userns=$(USERNS) \
 	  --restart=unless-stopped $(IMAGE)
 	@echo "YorkFolio: http://localhost:$(PORT)"
 
@@ -116,7 +118,7 @@ service: build ## run as a systemd user service (Quadlet), restarted on failure 
 	-@$(PODMAN) rm -f $(CONTAINER) >/dev/null 2>&1
 	@printf '%s\n' '[Unit]' 'Description=YorkFolio portfolio tracker' '' \
 	  '[Container]' 'Image=$(IMAGE)' 'ContainerName=$(CONTAINER)' 'PublishPort=$(PORT):8000' \
-	  'Volume=$(DATA):/data:z' 'UserNS=keep-id' '' '[Service]' 'Restart=on-failure' '' \
+	  'Volume=$(DATA):/data:z' 'UserNS=$(USERNS)' '' '[Service]' 'Restart=on-failure' '' \
 	  '[Install]' 'WantedBy=default.target' > $(QUADLET)
 	$(SYSTEMCTL) daemon-reload
 	$(SYSTEMCTL) restart $(CONTAINER).service

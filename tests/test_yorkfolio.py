@@ -2,6 +2,7 @@ import http.cookiejar
 import io
 import json
 import os
+import socket
 import sqlite3
 import tempfile
 import threading
@@ -539,9 +540,24 @@ class ServerTests(unittest.TestCase):
                 with opener.open(req) as resp:
                     return resp.status, json.load(resp)
             except urllib.error.HTTPError as exc:
-                return exc.code, json.load(exc)
+                with exc:
+                    return exc.code, json.load(exc)
 
         return call
+
+    def test_dual_stack(self):
+        httpd = server.make_server("0.0.0.0", 0)
+        port = httpd.server_address[1]
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        try:
+            if httpd.address_family != socket.AF_INET6:
+                self.skipTest("IPv6 unavailable")
+            for host in ("127.0.0.1", "[::1]"):
+                with urllib.request.urlopen(f"http://{host}:{port}/api/session", timeout=5) as resp:
+                    self.assertTrue(json.load(resp)["setup"])  # reachable over both IPv4 and IPv6
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
 
     def test_flow(self):
         admin, other = self.client(), self.client()
