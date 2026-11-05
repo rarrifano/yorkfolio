@@ -1,0 +1,33 @@
+[project]
+name = "yorkfolio"
+version = "0.2.0"
+description = "Holder-style portfolio tracker for B3 investors"
+requires-python = ">=3.10"
+dependencies = []  # stdlib only
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W",  # pycodestyle
+  "F",       # pyflakes
+  "I",       # import sorting
+  "B",       # bugbear
+  "UP",      # pyupgrade
+  "SIM",     # simplifications
+  "RUF",     # ruff-specific
+]
+ignore = [
+  "E731",                         # tiny local lambdas are fine
+  "RUF001", "RUF002", "RUF003",   # "ambiguous" unicode (–, ×, …) is intentional in pt-BR text
+  "SIM108",                       # if/else blocks are often clearer than long ternaries
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["RUF012"]            # fixture lists as class attributes
+
+[tool.ruff.format]
+quote-style = "double"

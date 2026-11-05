@@ -1,0 +1,14 @@
+# podman compose up -d   (or podman-compose up -d)
+services:
+  yorkfolio:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: localhost/yorkfolio:latest
+    container_name: yorkfolio
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data:z          # your database lives in ./data on the host
+    userns_mode: keep-id        # rootless podman: files in ./data stay owned by you
+    restart: unless-stopped

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install ruff
+        run: pip install ruff==0.8.4
+      - name: make lint
+        run: make lint
+
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: make test
+        run: make test
+
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: podman build -t localhost/yorkfolio:ci -f Containerfile .
+      - name: Smoke test
+        run: |
+          mkdir -p data
+          podman run -d --name yorkfolio -p 8000:8000 -v "$PWD/data:/data:z" --userns=keep-id localhost/yorkfolio:ci
+          for _ in $(seq 30); do curl -fsS http://localhost:8000/api/session && break; sleep 1; done
+          curl -fsS http://localhost:8000/api/session | grep -q '"setup": true'
+          curl -fsS http://localhost:8000/ | grep -q YorkFolio
+          podman stop yorkfolio

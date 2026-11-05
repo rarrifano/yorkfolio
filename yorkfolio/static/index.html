@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YorkFolio</title>
+  <script>
+    // apply the theme before first paint: saved choice, else the OS preference
+    document.documentElement.dataset.theme = localStorage.getItem('yorkfolio-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  </script>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="#carteira"><img src="/static/logo.svg" alt="" width="34" height="34"><b>YorkFolio</b></a>
+    <div class="head-right">
+      <span id="total"></span>
+      <span id="whoami" class="who"></span>
+      <button id="btn-theme" data-act="theme" title="Alternar tema">☾</button>
+      <button id="btn-market" data-act="market" title="Atualizar cotações e dados de mercado">↻ Cotações</button>
+      <button id="btn-logout" data-act="logout" title="Sair">Sair</button>
+    </div>
+  </header>
+  <nav>
+    <a href="#carteira" data-tab="carteira">Carteira</a>
+    <a href="#proventos" data-tab="proventos">Proventos</a>
+    <a href="#balanceamento" data-tab="balanceamento">Balanceamento</a>
+    <a href="#ir" data-tab="ir">IR</a>
+    <a href="#extrato" data-tab="extrato">Extrato</a>
+    <a href="#dados" data-tab="dados">Dados</a>
+  </nav>
+  <main id="view"><p class="muted">Carregando…</p></main>
+  <dialog id="dlg"></dialog>
+  <div id="toast" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

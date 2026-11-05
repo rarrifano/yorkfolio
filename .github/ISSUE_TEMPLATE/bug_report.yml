@@ -1,0 +1,43 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Never attach your B3 exports, `data/` folder or screenshots with real values**: they contain
+        personal financial data. Describe the problem with made-up numbers instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Import a Movimentação file with a "Grupamento" row
+        2. Open the Carteira tab
+        3. ...
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: How do you run YorkFolio?
+      options:
+        - Local Python (make run)
+        - Podman container (make up)
+        - systemd service (make service)
+        - Other
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: e.g. 0.2.0 or a1b2c3d
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error messages
+      render: text

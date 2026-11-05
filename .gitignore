@@ -1,0 +1,23 @@
+# ---- personal financial data: never commit ----
+data/
+*.db
+*.db-journal
+*.xlsx
+*.xls
+*.csv
+/*.png
+/*.jpg
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.venv/
+venv/
+
+# ---- tooling / editors / OS ----
+node_modules/
+.env
+.idea/
+.vscode/
+.DS_Store

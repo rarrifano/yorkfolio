@@ -1,0 +1,22 @@
+# keep personal data and dev files out of the image
+.git
+.github
+data/
+*.xlsx
+*.db
+*.png
+tests/
+**/__pycache__
+*.pyc
+.ruff_cache
+node_modules
+*.md
+Makefile
+compose.yaml
+Containerfile
+.containerignore
+.gitignore
+.gitattributes
+.editorconfig
+pyproject.toml
+biome.json
