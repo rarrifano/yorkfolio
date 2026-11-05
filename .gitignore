@@ -5,6 +5,7 @@ data/
 *.xlsx
 *.xls
 *.csv
+*.tar
 /*.png
 /*.jpg
 

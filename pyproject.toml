@@ -1,6 +1,6 @@
 [project]
 name = "yorkfolio"
-version = "0.2.0"
+version = "0.1.0"
 description = "Holder-style portfolio tracker for B3 investors"
 requires-python = ">=3.10"
 dependencies = []  # stdlib only

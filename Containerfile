@@ -1,8 +1,12 @@
 # YorkFolio — stdlib-only Python app: no pip install needed.
 FROM docker.io/library/python:3.14-slim
 
+ARG VERSION=dev
 LABEL org.opencontainers.image.title="YorkFolio" \
-      org.opencontainers.image.description="Holder-style portfolio tracker for B3 investors"
+      org.opencontainers.image.description="Self-hosted, holder-style portfolio tracker for B3 investors" \
+      org.opencontainers.image.source="https://github.com/rarrifano/yorkfolio" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${VERSION}"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

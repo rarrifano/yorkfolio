@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    name: Publish container image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: QEMU for arm64 builds
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-user-static
+      - name: Version from tag
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"                   # v0.1.0 -> 0.1.0
+          echo "full=$version" >> "$GITHUB_OUTPUT"
+          echo "minor=${version%.*}" >> "$GITHUB_OUTPUT"   # 0.1
+      - name: Build (linux/amd64 + linux/arm64)
+        run: |
+          podman build --platform linux/amd64,linux/arm64 --manifest yorkfolio \
+            --build-arg VERSION=${{ steps.version.outputs.full }} -f Containerfile .
+      - name: Push to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for tag in ${{ steps.version.outputs.full }} ${{ steps.version.outputs.minor }} latest; do
+            podman manifest push --all yorkfolio "docker://${IMAGE}:${tag}"
+          done
+          echo "Published ${IMAGE}:${{ steps.version.outputs.full }}" >> "$GITHUB_STEP_SUMMARY"

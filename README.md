@@ -28,14 +28,26 @@ the monthly DARF and the annual *Bens e Direitos*.
 
 ### With Podman (recommended)
 
+Run the published image (linux/amd64 and linux/arm64):
+
 ```bash
-git clone git@github.com:rarrifano/yorkfolio.git && cd yorkfolio
-make up            # builds the image and runs it on http://localhost:8000
+podman run -d --name yorkfolio -p 8000:8000 -v yorkfolio-data:/data ghcr.io/rarrifano/yorkfolio:0.1
 ```
 
-Open the page and **create the first account** (it becomes the administrator). Data lives in
-`./data` on the host. `make service` installs it as a systemd user service via Quadlet, so it is
-restarted automatically. Without `make`, use `podman compose up -d` (see `compose.yaml`).
+Open http://localhost:8000 and **create the first account** (it becomes the administrator).
+Everything is stored in the podman volume `yorkfolio-data`.
+
+From a clone you can build it yourself, using the same volume:
+
+```bash
+git clone https://github.com/rarrifano/yorkfolio.git && cd yorkfolio
+make up              # build the image, create the volume, run on http://localhost:8000
+make service         # or: keep it running as a systemd user service (Quadlet)
+make volume-export   # back up the volume to yorkfolio-data-<timestamp>.tar
+```
+
+Already running with plain Python? `make volume-import` copies your `./data` into the volume.
+Without `make`, use `podman compose up -d` (see `compose.yaml`).
 
 ### With plain Python
 
@@ -89,8 +101,9 @@ is automatic: the first account adopts the existing `data/yorkfolio.db`.
 | `make run` / `make test` / `make check` | dev server / unit tests / lint + tests |
 | `make lint` / `make format` | ruff + Biome checks / auto-fix and format |
 | `make import` · `market` · `summary` · `aporte AMOUNT=…` · `ir YEAR=…` | portfolio CLI |
-| `make backup` | consistent snapshot of every database into `data/backups/<timestamp>/` |
+| `make backup` | consistent snapshot of every database into `<data>/backups/<timestamp>/` (`CT=1` inside the container) |
 | `make build` · `up` · `down` · `restart` · `logs` · `shell` · `status` | container (podman) |
+| `make volume-import` / `make volume-export` | copy `./data` into the `yorkfolio-data` volume / save it to a tarball |
 | `make service` / `make service-remove` | systemd user service via Quadlet |
 
 Run `make` to see them all. Inside a toolbox/distrobox, podman and systemctl automatically run on the host.
