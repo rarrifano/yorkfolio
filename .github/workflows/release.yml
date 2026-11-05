@@ -3,6 +3,11 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch:  # re-publish the image of an existing release
+    inputs:
+      tag:
+        description: Release tag to build (e.g. v0.1.0)
+        required: true
 
 permissions:
   contents: read
@@ -14,14 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE: ghcr.io/${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@v7
-      - name: QEMU for arm64 builds
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq qemu-user-static
+        with:
+          ref: ${{ env.TAG }}
+      - uses: docker/setup-qemu-action@v3  # emulation for the arm64 build
+        with:
+          platforms: arm64
       - name: Version from tag
         id: version
         run: |
-          version="${GITHUB_REF_NAME#v}"                   # v0.1.0 -> 0.1.0
+          version="${TAG#v}"                               # v0.1.0 -> 0.1.0
           echo "full=$version" >> "$GITHUB_OUTPUT"
           echo "minor=${version%.*}" >> "$GITHUB_OUTPUT"   # 0.1
       - name: Build (linux/amd64 + linux/arm64)
