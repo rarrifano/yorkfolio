@@ -10,6 +10,8 @@
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT">
 </p>
 
+> **Prefer a native desktop app?** See [yorkfolio-qt](https://github.com/rarrifano/yorkfolio-qt), a Qt/PySide6 version with a C++ core.
+
 Import the Excel exports from the B3 investor portal and YorkFolio shows:
 - your positions with **preço médio**;
 - **patrimônio and returns** over time, compared with CDI and Ibovespa;
